@@ -1,0 +1,1 @@
+erl -pa ebin -eval "superchat_app:start(app, {})"
