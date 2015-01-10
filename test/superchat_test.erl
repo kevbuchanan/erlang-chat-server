@@ -2,5 +2,5 @@
 -include_lib("eunit/include/eunit.hrl").
 
 simple_test() ->
-    ok = application:start(superchat),
+    ok = superchat_app:start(),
     ?assertNot(undefined == whereis(superchat_sup)).
