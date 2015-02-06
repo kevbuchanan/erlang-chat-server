@@ -31,7 +31,7 @@ post_office_send_mail_test() ->
 
 post_office_delete_mailbox_test() ->
     post_office:start_link(),
-    {_Ok, {Id, _Pid}} = post_office:get_mailbox(1),
+    {_Ok, {_Id, _Pid}} = post_office:get_mailbox(1),
     post_office:delete_mailbox(1),
     Mailboxes = post_office:status(),
     ?assertEqual([], Mailboxes),
