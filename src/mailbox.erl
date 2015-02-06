@@ -21,6 +21,7 @@ loop(#box_state{messages = Messages, listeners = Listeners} = State) ->
             Sender ! {self(), NewState},
             proc_lib:hibernate(?MODULE, loop, [NewState]);
 
+        exit -> ok;
         _ -> proc_lib:hibernate(?MODULE, loop, [State])
     end.
 
