@@ -1,7 +1,7 @@
 -module(post_office).
 -behaviour(gen_server).
 
--export([start_link/0, stop/0, get_mailbox/1, delete_mailbox/1, send_mail/2, status/0]).
+-export([start_link/0, stop/0, get_mailbox/1, delete_mailbox/1, send_mail/2, broadcast_mail/1, status/0]).
 -export([init/1, handle_call/3, handle_cast/2, code_change/3, handle_info/2, terminate/2]).
 
 start_link() ->
@@ -15,6 +15,9 @@ delete_mailbox(SessionId) ->
 
 send_mail(SessionId, Message) ->
     gen_server:cast(?MODULE, {send_mail, SessionId, Message}).
+
+broadcast_mail(Message) ->
+    gen_server:cast(?MODULE, {broadcast_mail, Message}).
 
 status() ->
     gen_server:call(?MODULE, status).
@@ -47,12 +50,16 @@ handle_call(_Req, _From, State) ->
 handle_cast({send_mail, SessionId, Message}, Mailboxes) ->
     case get_mailbox(SessionId, Mailboxes) of
         [{_Id, Pid}] ->
-            Pid ! {self(), {mail, add_message, Message}},
+            Pid ! {self(), {mail, Message}},
             receive
                 _ -> ok
             end;
         _ -> ok
     end,
+    {noreply, Mailboxes};
+
+handle_cast({broadcast_mail, Message}, Mailboxes) ->
+    [Pid ! {self(), {mail, Message}} || {_Id, Pid} <- Mailboxes],
     {noreply, Mailboxes};
 
 handle_cast({delete_mailbox, SessionId}, Mailboxes) ->

@@ -14,7 +14,7 @@ new_mailbox_test() ->
 
 add_message_test() ->
     Pid = spawn_link(mailbox, start, [1]),
-    Pid ! {self(), {mail, add_message, "Hello"}},
+    Pid ! {self(), {mail, {add_message, "Hello"}}},
     receive
         {Pid, {box_state, BoxId, Messages, _}} ->
             ?assertEqual(1, BoxId),
@@ -24,7 +24,7 @@ add_message_test() ->
 
 add_listener_test() ->
     Pid = spawn_link(mailbox, start, [1]),
-    Pid ! {self(), {mail, add_listener, self()}},
+    Pid ! {self(), {mail, {add_listener, self()}}},
     receive
         {Pid, {box_state, _BoxId, Messages, Listeners}} ->
             ?assertEqual([self()], Listeners),
@@ -34,8 +34,8 @@ add_listener_test() ->
 
 notify_listener_test() ->
     Pid = spawn_link(mailbox, start, [1]),
-    Pid ! {self(), {mail, add_listener, self()}},
-    Pid ! {self(), {mail, add_message, "Hello"}},
+    Pid ! {self(), {mail, {add_listener, self()}}},
+    Pid ! {self(), {mail, {add_message, "Hello"}}},
     receive
         Messages when is_list(Messages) ->
             ?assertEqual(["Hello"], Messages)

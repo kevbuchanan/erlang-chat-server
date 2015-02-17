@@ -10,13 +10,13 @@ loop(#box_state{messages = Messages, listeners = Listeners} = State) ->
             Sender ! {self(), State},
             proc_lib:hibernate(?MODULE, loop, [State]);
 
-        {Sender, {mail, add_message, Message}} ->
+        {Sender, {mail, {add_message, Message}}} ->
             NewState = State#box_state{messages = [Message | Messages]},
             Sender ! {self(), NewState},
             lists:map(fun(Pid) -> Pid ! [Message] end, Listeners),
             proc_lib:hibernate(?MODULE, loop, [NewState]);
 
-        {Sender, {mail, add_listener, Listener}} ->
+        {Sender, {mail, {add_listener, Listener}}} ->
             NewState = State#box_state{listeners = [Listener | Listeners]},
             Sender ! {self(), NewState},
             proc_lib:hibernate(?MODULE, loop, [NewState]);
