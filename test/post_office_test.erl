@@ -26,8 +26,9 @@ post_office_send_mail_test() ->
     post_office:start_link(),
     {_Ok, {Id, Pid}} = post_office:get_mailbox(12),
     Ok = post_office:send_mail(Id, {add_message, "Message"}),
-    Pid ! {self(), {mail, check_mailbox}},
     ?assertEqual(ok, Ok),
+    timer:sleep(1),
+    Pid ! {self(), {mail, check_mailbox}},
     receive
         {Pid, {box_state, _, Messages, _}} ->
             ?assertEqual(["Message"], Messages)
