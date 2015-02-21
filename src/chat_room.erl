@@ -56,4 +56,5 @@ handle_info(_, State) ->
     {noreply, State}.
 
 terminate(_, _) ->
+    post_office:stop(),
     ok.

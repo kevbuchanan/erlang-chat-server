@@ -11,9 +11,8 @@ join_creates_new_mailbox_test() ->
     chat_room:start_link(),
     ClientSessions = chat_room:join(5),
     ?assertEqual([5], ClientSessions),
-    [{Id, BoxPid}] = post_office:status(),
+    [{Id, _BoxPid}] = post_office:status(),
     ?assertEqual(5, Id),
-    BoxPid ! exit,
     chat_room:stop().
 
 flush() ->

@@ -9,11 +9,10 @@ post_office_init_test() ->
 
 post_office_create_mailbox_test() ->
     post_office:start_link(),
-    {_Ok, {Id, Pid}} = post_office:get_mailbox(3),
+    {_Ok, {Id, _Pid}} = post_office:get_mailbox(3),
     ?assertEqual(Id, 3),
     Mailboxes = post_office:status(),
     ?assertEqual(1, length(Mailboxes)),
-    Pid ! exit,
     post_office:stop().
 
 post_office_find_mailbox_test() ->
@@ -21,8 +20,6 @@ post_office_find_mailbox_test() ->
     {_Ok, {Id, Pid}} = post_office:get_mailbox(1),
     {_Ok, {Id, Pid_2}} = post_office:get_mailbox(1),
     ?assertEqual(Pid, Pid_2),
-    Pid ! exit,
-    Pid_2 ! exit,
     post_office:stop().
 
 post_office_send_mail_test() ->
@@ -36,16 +33,14 @@ post_office_send_mail_test() ->
         {_Pid, {box_state, _, Messages, _}} ->
             ?assertEqual(["Message"], Messages)
     end,
-    Pid ! exit,
     post_office:stop().
 
 post_office_delete_mailbox_test() ->
     post_office:start_link(),
-    {_Ok, {_Id, Pid}} = post_office:get_mailbox(1),
+    {_Ok, {_Id, _Pid}} = post_office:get_mailbox(1),
     post_office:delete_mailbox(1),
     Mailboxes = post_office:status(),
     ?assertEqual([], Mailboxes),
-    Pid ! exit,
     post_office:stop().
 
 post_office_broadcast_mail_test() ->
@@ -64,6 +59,4 @@ post_office_broadcast_mail_test() ->
         {_, {box_state, _, Messages_2, _}} ->
             ?assertEqual([{user_left, 1}], Messages_2)
     end,
-    Pid ! exit,
-    Pid_2 ! exit,
     post_office:stop().

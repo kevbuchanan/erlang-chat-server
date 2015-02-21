@@ -80,5 +80,6 @@ code_change(_, _, State) ->
 handle_info(_, State) ->
     {noreply, State}.
 
-terminate(_, _) ->
+terminate(_, Mailboxes) ->
+    [Pid ! exit || {_Id, Pid} <- Mailboxes],
     ok.
