@@ -34,7 +34,7 @@ init(_) ->
 handle_call({get_mailbox, SessionId}, _From, Mailboxes) ->
     case get_mailbox(SessionId, Mailboxes) of
         [] ->
-            Pid = spawn_link(mailbox, start, [SessionId]),
+            Pid = mailbox:new_box(SessionId),
             Mailbox = {SessionId, Pid},
             {reply, {ok, Mailbox}, [Mailbox | Mailboxes]};
         [Mailbox] ->
@@ -50,22 +50,20 @@ handle_call(_Req, _From, State) ->
 handle_cast({send_mail, SessionId, Message}, Mailboxes) ->
     case get_mailbox(SessionId, Mailboxes) of
         [{_Id, Pid}] ->
-            Pid ! {self(), {mail, Message}},
-            receive
-                _ -> ok
-            end;
+            mailbox:deliver(Pid, Message),
+            ok;
         _ -> ok
     end,
     {noreply, Mailboxes};
 
 handle_cast({broadcast_mail, Message}, Mailboxes) ->
-    [Pid ! {self(), {mail, Message}} || {_Id, Pid} <- Mailboxes],
+    [mailbox:deliver(Pid, Message) || {_Id, Pid} <- Mailboxes],
     {noreply, Mailboxes};
 
 handle_cast({delete_mailbox, SessionId}, Mailboxes) ->
     NewMailboxes = lists:filter(fun({Id, Pid}) ->
         case Id /= SessionId of
-            false -> Pid ! exit, false;
+            false -> mailbox:stop(Pid), false;
             _ -> true
         end
     end, Mailboxes),
@@ -81,5 +79,5 @@ handle_info(_, State) ->
     {noreply, State}.
 
 terminate(_, Mailboxes) ->
-    [Pid ! exit || {_Id, Pid} <- Mailboxes],
+    [mailbox:stop(Pid) || {_Id, Pid} <- Mailboxes],
     ok.

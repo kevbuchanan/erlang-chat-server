@@ -25,20 +25,16 @@ flush() ->
 connect_adds_connection_pid_test() ->
     chat_room:start_link(),
     chat_room:join(2),
-    chat_room:connect(2, self()),
+    Listener = spawn(fun() ->
+        receive
+            Message ->
+                ?assertEqual(["Hellooo"], Message)
+        end
+    end),
+    chat_room:connect(2, Listener),
     flush(),
     timer:sleep(1),
     chat_room:send_mail(2, "Hellooo"),
-    receive
-        Message ->
-            ?assertEqual(["Hellooo"], Message)
-    end,
-    chat_room:join(3),
-    chat_room:send_mail(3, "Tacos"),
-    receive
-        Message2 ->
-            ?assertEqual(["Tacos"], Message2)
-    end,
     OtherClient = spawn(fun() ->
         receive
             Message3 ->

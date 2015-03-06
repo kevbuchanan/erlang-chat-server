@@ -2,42 +2,34 @@
 -include_lib("eunit/include/eunit.hrl").
 
 new_mailbox_test() ->
-    Pid = spawn_link(mailbox, start, [1]),
-    Pid ! {self(), {mail, check_mailbox}},
-    receive
-        {Pid, {box_state, BoxId, Messages, _}} ->
-            ?assertEqual(1, BoxId),
-            ?assertEqual([], Messages)
-    end,
-    Pid ! exit.
-
+    Pid = mailbox:new_box(1),
+    {BoxId, Messages, _} = mailbox:check_mail(Pid),
+    ?assertEqual(1, BoxId),
+    ?assertEqual([], Messages),
+    mailbox:stop(Pid).
 
 add_message_test() ->
-    Pid = spawn_link(mailbox, start, [1]),
-    Pid ! {self(), {mail, {message, "Hello"}}},
-    receive
-        {Pid, {box_state, BoxId, Messages, _}} ->
-            ?assertEqual(1, BoxId),
-            ?assertEqual(["Hello"], Messages)
-    end,
-    Pid ! exit.
+    Pid = mailbox:new_box(1),
+    {BoxId, Messages, _} = mailbox:deliver(Pid, "Hello"),
+    ?assertEqual(1, BoxId),
+    ?assertEqual(["Hello"], Messages),
+    mailbox:stop(Pid).
 
 add_listener_test() ->
-    Pid = spawn_link(mailbox, start, [1]),
-    Pid ! {self(), {mail, {add_listener, self()}}},
-    receive
-        {Pid, {box_state, _BoxId, Messages, Listeners}} ->
-            ?assertEqual([self()], Listeners),
-            ?assertEqual([], Messages)
-    end,
-    Pid ! exit.
+    Pid = mailbox:new_box(1),
+    {_BoxId, Messages, Listeners} = mailbox:add_listener(Pid, self()),
+    ?assertEqual([self()], Listeners),
+    ?assertEqual([], Messages),
+    mailbox:stop(Pid).
 
 notify_listener_test() ->
-    Pid = spawn_link(mailbox, start, [1]),
-    Pid ! {self(), {mail, {add_listener, self()}}},
-    Pid ! {self(), {mail, {message, "Hello"}}},
-    receive
-        Messages when is_list(Messages) ->
-            ?assertEqual(["Hello"], Messages)
-    end,
-    Pid ! exit.
+    Pid = mailbox:new_box(1),
+    Listener = spawn(fun() ->
+        receive
+            Messages when is_list(Messages) ->
+                ?assertEqual(["Pow"], Messages)
+        end
+    end),
+    mailbox:add_listener(Pid, Listener),
+    mailbox:deliver(Pid, "Pow"),
+    mailbox:stop(Pid).
